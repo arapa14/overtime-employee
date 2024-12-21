@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\Overtime;
 use Illuminate\Http\Request;
+use App\Exports\OvertimeExport;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class OvertimeController extends Controller
 {
@@ -46,8 +49,8 @@ class OvertimeController extends Controller
 
         Overtime::create($request->all());
 
-        return redirect()-> route('overtime.index')->with('success', 'Overtime added successfully');
-        }
+        return redirect()->route('overtime.index')->with('success', 'Overtime added successfully');
+    }
 
     /**
      * Display the specified resource.
@@ -79,5 +82,28 @@ class OvertimeController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function export()
+    {
+        // Define the base file path
+    $basePath = 'overtime/overtime_report';
+    $extension = '.xlsx';
+
+    // Check if the file already exists and append a number if it does
+    $filePath = $basePath . $extension;
+    $counter = 1;
+
+    // Loop to find an available filename
+    while (Storage::disk('public')->exists($filePath)) {
+        $filePath = $basePath . '_' . $counter . $extension;
+        $counter++;
+    }
+
+    // Export data to Excel and store it on the 'public' disk
+    Excel::store(new OvertimeExport, $filePath, 'public');
+
+    // Return the file for download
+    return response()->download(storage_path('app/public/' . $filePath));
     }
 }

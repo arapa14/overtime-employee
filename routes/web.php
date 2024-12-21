@@ -13,6 +13,4 @@ Route::resource('employee', EmployeeController::class);
 
 Route::resource('overtime', OvertimeController::class);
 
-Route::get('export-overtime', function() {
-    return Excel::download(new OvertimeExport, 'overtime.xlsx');
-});
+Route::get('export-overtime', [OvertimeController::class, 'export'])->name('export.overtime');
