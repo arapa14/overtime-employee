@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Exports\OvertimeExport;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Writer\Pdf\Tcpdf;
 
 class OvertimeController extends Controller
 {
@@ -87,23 +89,72 @@ class OvertimeController extends Controller
     public function export()
     {
         // Define the base file path
-    $basePath = 'overtime/overtime_report';
-    $extension = '.xlsx';
+        $basePath = 'excel/overtime_report';
+        $extension = '.xlsx';
 
-    // Check if the file already exists and append a number if it does
-    $filePath = $basePath . $extension;
-    $counter = 1;
+        // Check if the file already exists and append a number if it does
+        $filePath = $basePath . $extension;
+        $counter = 1;
 
-    // Loop to find an available filename
-    while (Storage::disk('public')->exists($filePath)) {
-        $filePath = $basePath . '_' . $counter . $extension;
-        $counter++;
+        // Loop to find an available filename
+        while (Storage::disk('public')->exists($filePath)) {
+            $filePath = $basePath . '_' . $counter . $extension;
+            $counter++;
+        }
+
+        // Export data to Excel and store it on the 'public' disk
+        Excel::store(new OvertimeExport, $filePath, 'public');
+
+        // Return the file for download
+        return response()->download(storage_path('app/public/' . $filePath));
     }
 
-    // Export data to Excel and store it on the 'public' disk
-    Excel::store(new OvertimeExport, $filePath, 'public');
 
-    // Return the file for download
-    return response()->download(storage_path('app/public/' . $filePath));
+    public function toPdf()
+    {
+        try {
+            // Path to the Excel file
+            $excelFilePath = storage_path('app/public/excel/overtime_report.xlsx');
+        
+            // Check if the file exists
+            if (!file_exists($excelFilePath)) {
+                return response()->json(['error' => 'Excel file not found.'], 404);
+            }
+        
+            // Load the Excel file into a Spreadsheet object
+            $spreadsheet = IOFactory::load($excelFilePath);
+        
+            // Create a Tcpdf writer instance
+            $writer = new Tcpdf($spreadsheet);
+        
+            // Define the output PDF directory and base file name
+            $pdfFolder = storage_path('app/public/pdf');
+            $baseFileName = 'overtime_report';
+            $extension = '.pdf';
+        
+            // Ensure the PDF directory exists
+            if (!is_dir($pdfFolder)) {
+                mkdir($pdfFolder, 0777, true);
+            }
+        
+            // Generate unique file name
+            $pdfPath = $pdfFolder . '/' . $baseFileName . $extension;
+            $counter = 1;
+            while (file_exists($pdfPath)) {
+                $pdfPath = $pdfFolder . '/' . $baseFileName . '_' . $counter . $extension;
+                $counter++;
+            }
+        
+            // Save the spreadsheet as a PDF
+            $writer->save($pdfPath);
+        
+            // Return the PDF for download
+            return response()->download($pdfPath);
+        } catch (\PhpOffice\PhpSpreadsheet\Exception $e) {
+            return response()->json(['error' => 'Failed to process the Excel file: ' . $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An unexpected error occurred: ' . $e->getMessage()], 500);
+        }
+        
     }
 }

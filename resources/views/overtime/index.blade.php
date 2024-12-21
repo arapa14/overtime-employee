@@ -45,6 +45,8 @@
         <a href="{{ url('/export-overtime') }}" class="btn btn-success mb-3">
             Export to Excel
         </a>
+        <a href="{{ route('export.overtime.pdf') }}" class="btn btn-success">Export to PDF</a>
+
         
 
         <!-- Button to trigger the modal -->
