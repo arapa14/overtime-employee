@@ -51,9 +51,18 @@ class OvertimeExport implements FromCollection, WithMapping, WithStyles, WithEve
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
 
-                for ($col = 'A'; $col <= 'Z'; $col++) {
-                    $sheet->setCellValue($col . '1', ''); // Clear each cell in the range
+                // Get the highest row and column that is used in the sheet
+                $highestColumn = $sheet->getHighestColumn(); // e.g., 'Z'
+                $highestRow = $sheet->getHighestRow(); // e.g., 100
+
+                // Loop through all columns (from 'A' to the highest column)
+                for ($col = 'A'; $col <= $highestColumn; $col++) {
+                    // Loop through all rows (from 1 to the highest row)
+                    for ($row = 1; $row <= $highestRow; $row++) {
+                        $sheet->setCellValue($col . $row, ''); // Clear each cell
+                    }
                 }
+
 
                 // Title starting from B2
                 $sheet->mergeCells('B2:G2');
@@ -116,7 +125,7 @@ class OvertimeExport implements FromCollection, WithMapping, WithStyles, WithEve
                 foreach ($headers as $key => $header) {
                     $column = chr(66 + $key); // Menghasilkan B, C, D, E, F, G berdasarkan posisi key
                     $sheet->setCellValue($column . $startRow, $header); // Menulis header pada B9, C9, D9, dst.
-                    
+
                     // Mengatur gaya dengan border untuk setiap kolom header
                     $sheet->getStyle($column . $startRow)->applyFromArray([
                         'font' => ['bold' => true],
@@ -139,10 +148,11 @@ class OvertimeExport implements FromCollection, WithMapping, WithStyles, WithEve
                     $sheet->setCellValue('E' . $row, $item->employee->position);
                     $sheet->setCellValue('F' . $row, $item->mulai);
                     $sheet->setCellValue('G' . $row, $item->selesai);
-                
+
                     // Loop through columns B to G and apply borders
                     foreach (range('B', 'G') as $column) {
                         $sheet->getStyle($column . $row)->applyFromArray([
+                            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                             'borders' => [
                                 'top' => ['borderStyle' => Border::BORDER_THIN],
                                 'bottom' => ['borderStyle' => Border::BORDER_THIN],
@@ -153,7 +163,7 @@ class OvertimeExport implements FromCollection, WithMapping, WithStyles, WithEve
                     }
                     $row++;
                 }
-                
+
                 // Apply borders to the last row
                 $lastRow = $row - 1; // Last data row
                 foreach (range('B', 'G') as $column) {
@@ -166,9 +176,9 @@ class OvertimeExport implements FromCollection, WithMapping, WithStyles, WithEve
                         ],
                     ]);
                 }
-                
 
-                
+
+
 
                 // Auto resize columns
                 foreach (range('B', 'G') as $column) {
