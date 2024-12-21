@@ -42,6 +42,10 @@
 
     <div class="container">
         <h2 class="my-4">Daftar Overtime</h2>
+        <a href="{{ url('/export-overtime') }}" class="btn btn-success mb-3">
+            Export to Excel
+        </a>
+        
 
         <!-- Button to trigger the modal -->
         <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addOvertimeModal">Tambah Overtime</button>

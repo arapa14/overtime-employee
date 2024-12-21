@@ -1,8 +1,10 @@
 <?php
 
+use App\Exports\OvertimeExport;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\OvertimeController;
 use Illuminate\Support\Facades\Route;
+use Maatwebsite\Excel\Facades\Excel;
 
 // Mengarahkan root ke controller
 Route::get('/', [EmployeeController::class, 'index']);
@@ -10,3 +12,7 @@ Route::get('/', [EmployeeController::class, 'index']);
 Route::resource('employee', EmployeeController::class);
 
 Route::resource('overtime', OvertimeController::class);
+
+Route::get('export-overtime', function() {
+    return Excel::download(new OvertimeExport, 'overtime.xlsx');
+});
